@@ -3,21 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mini Platformer</title>
+  <title>2D Monster Fight</title>
   <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
   <div id="ui">
-    <h1>Mini Platformer</h1>
-    <p>Use ← → to move, space to jump</p>
-    <p>Score: <span id="score">0</span></p>
+    <h1>2D Monster Fight</h1>
+    <p>Type the word to damage the monster. ← → move, space jump.</p>
+    <p>
+      Score: <span id="score">0</span>
+      · Accuracy: <span id="accuracy">100%</span>
+    </p>
+
+    <div id="typingArea">
+      <label for="typeField">Typing Arena</label>
+      <div id="currentTarget"></div>
+      <input
+        id="typeField"
+        type="text"
+        autocomplete="off"
+        autocapitalize="none"
+        spellcheck="false"
+        placeholder="Start typing to attack"
+      />
+      <p id="feedbackHint">Correct letters turn green, wrong ones flash red.</p>
+    </div>
   </div>
 
   <canvas id="gameCanvas" width="800" height="480"></canvas>
 
-  <script src="scripts/input.js"></script>
-  <script src="scripts/player.js"></script>
-  <script src="scripts/level.js"></script>
-  <script src="scripts/game.js"></script>
+  <script type="module" src="scripts/game.js"></script>
 </body>
 </html>
