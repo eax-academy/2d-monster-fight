@@ -3,6 +3,7 @@
 import { setupInput } from './input.js';
 import { Player } from './player.js';
 import { Level } from './level.js';
+import { Monster } from './monster.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -56,9 +57,13 @@ const gameState = {
 let lastTime = 0;
 let player;
 let level;
+let monster;
+let fpsAccumulator = 0;
+let fpsFrames = 0;
 
 function init() {
   setupInput();
+  bindControls();
   player = new Player(100, 350);
   level = new Level();
   monster = createMonsterForLevel(gameState.level);
@@ -91,17 +96,68 @@ function createMonsterForLevel(levelInfo) {
 }
 
 function gameLoop(timestamp) {
-  const delta = timestamp - lastTime;
+  const deltaTime = timestamp - lastTime;
   lastTime = timestamp;
 
-  update(delta);
-  draw();
+  if (!gameState.isPaused) {
+    update(deltaTime);
+    draw();
+    checkFrameBudget(deltaTime);
+    reportFps(deltaTime);
+  }
 
   window.requestAnimationFrame(gameLoop);
 }
 
-function update(delta) {
-  player.update(delta, level);
+function update(deltaTime) {
+  monster.update(deltaTime);
+  updateMonsterState(deltaTime);
+  updatePlayerState(deltaTime);
+  updateUiState(deltaTime);
+}
+
+function updateMonsterState(deltaTime) {
+  const monsterState = gameState.monster;
+  monsterState.frameTimer += deltaTime;
+  if (monsterState.frameTimer >= monsterState.frameInterval) {
+    monsterState.animationState = monsterState.animationState === 'idle' ? 'attack-ready' : 'idle';
+    monsterState.frameTimer = 0;
+  }
+
+  monsterState.hp = monster.hp;
+  monsterState.maxHP = monster.maxHP;
+  monsterState.word = monster.currentWord;
+  monsterState.defeated = !monster.alive;
+
+  if (monsterState.defeated && !monsterState.victoryAnnounced) {
+    handleMonsterDefeat();
+  }
+}
+
+function updatePlayerState(deltaTime) {
+  player.update(deltaTime, level);
+  gameState.player.hp = Math.max(gameState.player.hp - deltaTime * 0.001, 0);
+  gameState.player.damageDealt += deltaTime * 0.01;
+}
+
+function updateUiState(deltaTime) {
+  gameState.ui.score = player.score;
+  scoreEl.textContent = gameState.ui.score.toFixed(0);
+
+  if (gameState.ui.damageText) {
+    gameState.ui.damageText.timer -= deltaTime;
+    gameState.ui.damageText.y -= deltaTime * 0.02;
+    if (gameState.ui.damageText.timer <= 0) {
+      gameState.ui.damageText = null;
+    }
+  }
+
+  if (gameState.ui.victoryMessage) {
+    gameState.ui.victoryMessage.timer -= deltaTime;
+    if (gameState.ui.victoryMessage.timer <= 0) {
+      gameState.ui.victoryMessage = null;
+    }
+  }
 }
 
 function draw() {
